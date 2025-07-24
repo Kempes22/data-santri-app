@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
+const pdf = require('pdf-creator-node');
 
 const dataPath = path.join(__dirname, '../data/santri.json');
 
@@ -103,22 +104,38 @@ exports.updateSantri = (req, res) => {
   res.redirect('/api/santri/view?success=1');
 };
 
-// Export ke PDF
+// Export ke PDF dengan template
 exports.exportPDF = (req, res) => {
   const data = JSON.parse(fs.readFileSync(dataPath));
-  const doc = new PDFDocument();
+  const templatePath = path.join(__dirname, '../templates/template-pdf.html');
 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename=santri.pdf');
-  doc.pipe(res);
+  if (!fs.existsSync(templatePath)) {
+    return res.status(500).send("Template PDF tidak ditemukan");
+  }
 
-  doc.fontSize(16).text('Daftar Santri', { align: 'center' });
-  doc.moveDown();
-  data.forEach((s, i) => {
-    doc.fontSize(12).text(`${i + 1}. ${s.nama} | ${s.jenjang} | ${s.alamat} | ${s.orangtua} | ${s.tanggallahir}`);
-  });
+  const html = fs.readFileSync(templatePath, 'utf-8');
 
-  doc.end();
+  const document = {
+    html: html,
+    data: { santri: data },
+    path: './daftar-santri.pdf',
+    type: ''
+  };
+
+  const options = {
+    format: 'A4',
+    orientation: 'portrait',
+    border: '10mm'
+  };
+
+  pdf.create(document, options)
+    .then(() => {
+      res.download('./daftar-santri.pdf');
+    })
+    .catch(error => {
+      console.error(error);
+      res.status(500).send("Gagal generate PDF");
+    });
 };
 
 // Export ke Excel

@@ -13,6 +13,8 @@
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
+    "handlebars": "^4.7.8",
+    "pdf-creator-node": "^2.3.5",
     "pdfkit": "^0.17.1"
   }
 }
